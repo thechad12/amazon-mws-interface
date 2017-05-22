@@ -1,0 +1,8 @@
+flask
+werkzeug
+requests_toolbelt
+requests
+boto
+sqlalchemy
+httplib2
+flask_wtf
