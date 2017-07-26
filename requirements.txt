@@ -6,3 +6,6 @@ boto
 sqlalchemy
 httplib2
 flask_wtf
+Flask-Cache
+functools
+lru_cache
