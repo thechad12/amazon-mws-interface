@@ -24,12 +24,6 @@ csrf = CsrfProtect()
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = set(['xml'])
-UPLOAD_FOLDER = 'uploads/'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-DOWNLOAD_FOLDER = 'downloads/'
-app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
-FEED_FOLDER = 'feeds/'
-app.config['FEED_FOLDER'] = FEED_FOLDER
 
 # Keys
 MWS_ACCESS_KEY = json.loads(open(
@@ -42,6 +36,11 @@ MARKETPLACE_ID = json.loads(open(
     'amazon.json','r').read())['web']['marketplace_id']
 
 ACCOUNT_TYPE = "Merchant"
+
+conn = connection.MWSConnection(aws_access_key_id=MWS_ACCESS_KEY,
+aws_secret_access_key=MWS_SECRET_KEY, Merchant=MERCHANT_ID)
+
+response = MWSConnection._parse_response = lambda s,x,y,z: z
 
 @app.route('/')
 @app.route('/home/')
@@ -87,9 +86,6 @@ def feed_submission():
             c = u.encode("utf-8")
             feed_content = c
 
-            conn = connection.MWSConnection(aws_access_key_id=MWS_ACCESS_KEY,
-            aws_secret_access_key=MWS_SECRET_KEY, Merchant=MERCHANT_ID)
-
             feed = conn.submit_feed(
                 FeedType=feed_operation(file_name),
                 PurgeAndReplace=False,
@@ -114,9 +110,6 @@ def feed_submission():
 
 @app.route('/feed-history')
 def feed_history():
-    response = MWSConnection._parse_response = lambda s,x,y,z: z
-    conn = connection.MWSConnection(aws_access_key_id=MWS_ACCESS_KEY,
-            aws_secret_access_key=MWS_SECRET_KEY, Merchant=MERCHANT_ID)
     feed_history = conn.get_feed_submission_list()
     response = Response(feed_history, mimetype='text/xml')
     return response
@@ -129,10 +122,6 @@ def csrf_error(error):
 @app.route('/feed-result/<int:feed_id>')
 def feed_result(feed_id):
     try:
-        response = MWSConnection._parse_response = lambda s,x,y,z: z
-        conn = connection.MWSConnection(aws_access_key_id=MWS_ACCESS_KEY,
-            aws_secret_access_key=MWS_SECRET_KEY, Merchant=MERCHANT_ID)
-
         submitted_feed = conn.get_feed_submission_result(FeedSubmissionId=feed_id)
 
         response = Response(submitted_feed, mimetype='text/xml')
