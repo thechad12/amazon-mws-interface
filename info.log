@@ -1,6 +1,0 @@
-Type of feed: <type 'str'>
-Value of feed: <?xml version="1.0"?>
-<SubmitFeedResponse xmlns="http://mws.amazonaws.com/doc/2009-01-01/"><SubmitFeedResult><FeedSubmissionInfo><FeedSubmissionId>424655017410</FeedSubmissionId><FeedType>_POST_PRODUCT_IMAGE_DATA_</FeedType><SubmittedDate>2017-09-01T15:24:30+00:00</SubmittedDate><FeedProcessingStatus>_SUBMITTED_</FeedProcessingStatus></FeedSubmissionInfo></SubmitFeedResult><ResponseMetadata><RequestId>cbcb73b4-bd2d-4425-ab58-36756598027c</RequestId></ResponseMetadata></SubmitFeedResponse>
-Type of feed: <type 'str'>
-Value of feed: <?xml version="1.0"?>
-<SubmitFeedResponse xmlns="http://mws.amazonaws.com/doc/2009-01-01/"><SubmitFeedResult><FeedSubmissionInfo><FeedSubmissionId>427304017416</FeedSubmissionId><FeedType>_POST_PRODUCT_DATA_</FeedType><SubmittedDate>2017-09-07T14:44:59+00:00</SubmittedDate><FeedProcessingStatus>_SUBMITTED_</FeedProcessingStatus></FeedSubmissionInfo></SubmitFeedResult><ResponseMetadata><RequestId>7a9acb9a-c395-43b5-8813-e5dc488e2d4b</RequestId></ResponseMetadata></SubmitFeedResponse>
