@@ -8,16 +8,17 @@ from boto.mws import connection
 import boto.mws.response
 import boto.mws.exception
 from boto.mws.connection import MWSConnection
-import itertools
 import os
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 import re
 import json
-import httplib2
 from flask_wtf.csrf import CsrfProtect
 import xml.etree.ElementTree as et
-
+import config
+from database import FeedResult, Base
+import logging
+from logging.handlers import RotatingFileHandler
 
 csrf = CsrfProtect()
 
@@ -26,14 +27,13 @@ app = Flask(__name__)
 ALLOWED_EXTENSIONS = set(['xml'])
 
 # Keys
-MWS_ACCESS_KEY = json.loads(open(
-    'amazon.json','r').read())['web']['access_key']
-MWS_SECRET_KEY = json.loads(open(
-    'amazon.json','r').read())['web']['secret_key']
-MERCHANT_ID = json.loads(open(
-    'amazon.json','r').read())['web']['merchant_id']
-MARKETPLACE_ID = json.loads(open(
-    'amazon.json','r').read())['web']['marketplace_id']
+MWS_ACCESS_KEY = os.environ['MWS_ACCESS_KEY']
+MWS_SECRET_KEY = os.environ['MWS_SECRET_KEY']
+MERCHANT_ID = os.environ['MERCHANT_ID']
+MARKETPLACE_ID = os.environ['MARKETPLACE_ID']
+app_secret = os.environ['secret_key']
+host = os.environ['host']
+port = os.environ['port']
 
 ACCOUNT_TYPE = "Merchant"
 
@@ -41,6 +41,11 @@ conn = connection.MWSConnection(aws_access_key_id=MWS_ACCESS_KEY,
 aws_secret_access_key=MWS_SECRET_KEY, Merchant=MERCHANT_ID)
 
 response = MWSConnection._parse_response = lambda s,x,y,z: z
+
+engine = create_engine('sqlite:///amazon.db')
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
 
 @app.route('/')
 @app.route('/home/')
@@ -63,6 +68,8 @@ def feed_operation(f_name):
         return '_POST_PRODUCT_IMAGE_DATA_'
     elif 'product' in f_name:
         return '_POST_PRODUCT_DATA_'
+    elif 'inventory' in f_name:
+        return '_POST_INVENTORY_AVAILABILITY_DATA_'
     else:
         raise ValueError('Please name your file appropriately')
 
@@ -95,12 +102,21 @@ def feed_submission():
 
             if type(feed) is not str:
                 feed_info = feed.SubmitFeedResult.FeedSubmissionInfo.FeedSubmissionId
+                feed_type = feed.SubmitFeedResult.FeedSubmissionId.FeedType
+                date = feed.SubmitFeedResult.FeedSubmissionId.SubmittedDate
             else:
                 tree = et.fromstring(feed)
                 xmlns = {'response': '{http://mws.amazonaws.com/doc/2009-01-01/}'}
                 info = tree.find('.//{response}FeedSubmissionId'.format(**xmlns))
+                f_type = tree.find('.//{response}FeedType'.format(**xmlns))
+                f_date = tree.find('.//{response}SubmittedDate'.format(**xmlns))
                 feed_info = info.text
+                feed_type = f_type.text
+                date = f_date.text
 
+            feed_obj = FeedResult(id=feed_info, feed_type=feed_type, date=date)
+            session.add(feed_obj)
+            session.commit()
             flash('Submitted Product Feed: ' + str(feed_info))
             return redirect(url_for('feed_result', feed_id=feed_info))
 
@@ -108,7 +124,12 @@ def feed_submission():
         return render_template('submit_feed.html',access_key=MWS_ACCESS_KEY,secret_key=MWS_SECRET_KEY,
             merchant_id=MERCHANT_ID,marketplace_id=MARKETPLACE_ID)
 
-@app.route('/feed-history')
+@app.route('/feed-history/')
+def get_feeds():
+    feeds = session.query(FeedResult).all()
+    return render_template('feeds.html', feeds=feeds)
+
+@app.route('/recent-feed-history/')
 def feed_history():
     feed_history = conn.get_feed_submission_list()
     response = Response(feed_history, mimetype='text/xml')
@@ -123,14 +144,16 @@ def csrf_error(error):
 def feed_result(feed_id):
     try:
         submitted_feed = conn.get_feed_submission_result(FeedSubmissionId=feed_id)
-
         response = Response(submitted_feed, mimetype='text/xml')
         return response
     except:
-        output = '<h2>Feed processing result not ready. Please refresh in a minute</h2>'
+        output = '<h2>Feed processing result not ready for feed %s. Please refresh in a minute</h2>' % feed_id
         return output
 
 if __name__ == '__main__':
+    handler = RotatingFileHandler('info.log',maxBytes=10000,backupCount=1)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
     app.debug = True
-    app.secret_key = 'secret_key'
-    app.run(host='0.0.0.0', port=8000)
+    app.secret_key = app_secret
+    app.run(host=host, port=int(port))
