@@ -1,0 +1,24 @@
+{% block content %}
+
+<body>
+  <div class="heading">
+    <h3>Submit Amazon Feed</h3>
+  </div>
+
+  <a href="{{ url_for('home') }}" method="GET">Home</a>
+
+  <form action="{{ url_for('feed_submission') }}" method="POST" name="file" enctype="multipart/form-data">
+    <input type="file" name="file">
+
+        <select name="file_name">
+            <option value="product">Products</option>
+            <option value="image">Images</option>
+            <option value="price">Prices</option>
+            <option value="relationship">Relationship</option>
+            <option value="inventory">Inventory</option>
+        </select>
+    <input type="submit" name="file_name" value="Submit">
+  </form>
+</body>
+
+{% endblock %}

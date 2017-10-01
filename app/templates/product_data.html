@@ -1,0 +1,20 @@
+{% block content %}
+
+<div class="page-heading">
+  <h2>Get Amazon Product Data</h2>
+    <form action="{{ url_for('product_data') }}" method='post' name='product_data'>
+      <input type="hidden">
+      <div class="form">
+        <form>
+          SKUS:<input type="text" size="60" name="ids">
+
+          File Name:<input type="text" size="40" name="file">
+
+
+          <input type="submit" name="submit" value="Submit">
+        </form>
+      </div>
+    </form>
+  </div>
+
+{% endblock %}
