@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, make_response, send_from_dire
 from werkzeug.utils import secure_filename
 from werkzeug.local import Local, LocalManager
 from requests_toolbelt import MultipartEncoder
+from models import ArrayStack
 import requests
 import boto
 from boto.mws import connection
@@ -44,6 +45,9 @@ engine = create_engine('sqlite:///amazon.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+data = None
+stack = ArrayStack(data)
 
 @app.route('/')
 @app.route('/home/')
@@ -115,6 +119,8 @@ def feed_submission():
             feed_obj = FeedResult(id=feed_info, feed_type=feed_type, date=date)
             session.add(feed_obj)
             session.commit()
+            # Push feed id to stack for access
+            stack.push(feed_obj.id)
             flash('Submitted Product Feed: ' + str(feed_info))
             return redirect(url_for('feed_result', feed_id=feed_info))
 
